@@ -1,6 +1,7 @@
 package ir.fum.cloud.notification.core.exception;
 
 import ir.fum.cloud.notification.core.domain.model.helper.GenericResponse;
+import ir.fum.cloud.notification.core.util.GeneralUtils;
 import lombok.Getter;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -167,7 +168,7 @@ public class NotificationExceptionStatus {
     public static final NotificationExceptionStatus INTERNAL_ERROR = new NotificationExceptionStatus(
             "INTERNAL_ERROR", 999, "خطای داخلی رخ داده است.", ResponseCode.INTERNAL_SERVER_ERROR
     );
-    private static final HashMap<String, NotificationExceptionStatus> map = new HashMap();
+    private static HashMap<String, NotificationExceptionStatus> map = new HashMap<>();
     final String name;
     final int code;
     final String description;
@@ -178,6 +179,9 @@ public class NotificationExceptionStatus {
         this.code = code;
         this.description = description;
         this.status = status;
+        if (GeneralUtils.isNullOrEmpty(map)) {
+            map = new HashMap<>();
+        }
         map.put(name, this);
     }
 
