@@ -3,6 +3,7 @@ package ir.fum.cloud.notification.core.security;
 
 import ir.fum.cloud.notification.core.configuration.DocsConfiguration;
 import ir.fum.cloud.notification.core.configuration.ProjectConfiguration;
+import ir.fum.cloud.notification.core.domain.service.AuthServiceClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +28,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final DocsConfiguration docsConfiguration;
     private final ProjectConfiguration projectConfiguration;
+    private final AuthServiceClient authServiceClient;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -38,7 +40,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .addFilter(new MyBasicAuthenticationFilter(authenticationManager(), projectConfiguration))
+                .addFilter(new MyBasicAuthenticationFilter(authenticationManager(), projectConfiguration, authServiceClient))
                 .authorizeRequests()
                 .regexMatchers("\\/docs/api-docs/private(&.*|$)").authenticated()
                 .antMatchers("/login", "/**", "/actuator/**", "/webjars/**",

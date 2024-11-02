@@ -40,7 +40,7 @@ public class ResponseExceptionHandler extends ResponseEntityExceptionHandler {
 
     }
 
-    @ResponseStatus(HttpStatus.OK)
+//    @ResponseStatus(HttpStatus.OK)
     @ExceptionHandler(NotificationException.class)
     public ResponseEntity<Object> notificationExceptionHandler(WebRequest request,
                                                                NotificationException exception) {

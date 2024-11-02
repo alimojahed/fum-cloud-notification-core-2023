@@ -1,10 +1,13 @@
 package ir.fum.cloud.notification.core.security;
 
 
+import auth.Auth;
 import ir.fum.cloud.notification.core.configuration.ProjectConfiguration;
 import ir.fum.cloud.notification.core.domain.model.vo.UserVO;
+import ir.fum.cloud.notification.core.domain.service.AuthServiceClient;
 import ir.fum.cloud.notification.core.exception.NotificationException;
 import ir.fum.cloud.notification.core.exception.NotificationExceptionStatus;
+import ir.fum.cloud.notification.core.util.GeneralUtils;
 import ir.fum.cloud.notification.core.util.request.ResponseWriterUtil;
 import ir.fum.cloud.notification.core.util.request.retrofit.RetrofitHelper;
 import ir.fum.cloud.notification.core.util.request.retrofit.RetrofitUtil;
@@ -36,11 +39,14 @@ import java.util.Collection;
 public class MyBasicAuthenticationFilter extends BasicAuthenticationFilter {
 
     private final ProjectConfiguration projectConfiguration;
+    private final AuthServiceClient authServiceClient;
 
     public MyBasicAuthenticationFilter(AuthenticationManager authenticationManager,
-                                       ProjectConfiguration projectConfiguration) {
+                                       ProjectConfiguration projectConfiguration,
+                                       AuthServiceClient authServiceClient) {
         super(authenticationManager);
         this.projectConfiguration = projectConfiguration;
+        this.authServiceClient = authServiceClient;
     }
 
     @SneakyThrows
@@ -56,22 +62,15 @@ public class MyBasicAuthenticationFilter extends BasicAuthenticationFilter {
 
         try {
 
-            AuthApi api = RetrofitUtil.getInstance(RetrofitUtil.authRetrofit, projectConfiguration.getAuthServiceUrl())
-                    .create(AuthApi.class);
-
             String token = request.getHeader("Authorization");
 
-            Call<UserVO> userPrincipal = api.validateUser(token);
+            Auth.ValidateResponse validateResponse = authServiceClient.validateToken(token);
 
-            Response<UserVO> authResponse = RetrofitHelper.request(userPrincipal);
-
-            if (!authResponse.isSuccessful()) {
-                throw NotificationException.exception(
-                        NotificationExceptionStatus.INVALID_TOKEN
-                );
+            if (!GeneralUtils.isNullOrEmpty(validateResponse.getError())) {
+                throw NotificationException.exception(NotificationExceptionStatus.UNAUTHORIZED);
             }
 
-            UserVO principal = authResponse.body();
+            UserVO principal =  new UserVO(validateResponse.getUserId());
 
             SecurityContext securityContext = SecurityContextHolder.getContext();
 
@@ -86,10 +85,15 @@ public class MyBasicAuthenticationFilter extends BasicAuthenticationFilter {
                 log.debug("Authentication set to security context");
             }
 
+            log.info("User is authenticated");
+
+            doFilter(request, response, chain);
+
         } catch (NotificationException e) {
             log.error(e.getDeveloperMessage());
             ResponseWriterUtil.sendProcessErrorResponse(request, response, e, HttpStatus.valueOf(e.getStatus()));
             return;
+
         } catch (Exception e) {
 
             log.error(e.getMessage());
@@ -99,11 +103,6 @@ public class MyBasicAuthenticationFilter extends BasicAuthenticationFilter {
                     NotificationException.exception(NotificationExceptionStatus.INTERNAL_ERROR),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-
-        log.info("User is authenticated");
-
-        doFilter(request, response, chain);
 
     }
 

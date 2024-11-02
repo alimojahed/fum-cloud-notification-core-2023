@@ -15,4 +15,10 @@ public class ProjectConfiguration {
     @Value("${auth.service.base.url:http://localhost:8082/}")
     private String authServiceUrl;
 
+    @Value("${auth.grpc.address}")
+    private String authServiceGrpcHost;
+
+    @Value("${auth.grpc.port}")
+    private int authServiceGrpcPort;
+
 }
