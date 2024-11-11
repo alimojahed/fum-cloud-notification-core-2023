@@ -13,6 +13,7 @@ public class Endpoint {
     public static final String MAIL = "/mail";
     public static final String BULK = "/bulk";
     public static final String RESEND = "/resend";
+    public static final String REQUESTS = "/requests";
 
     private Endpoint() {
     }

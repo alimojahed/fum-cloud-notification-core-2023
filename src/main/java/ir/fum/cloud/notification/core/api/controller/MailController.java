@@ -8,20 +8,21 @@ import ir.fum.cloud.notification.core.domain.annotation.response.error.*;
 import ir.fum.cloud.notification.core.domain.model.helper.Endpoint;
 import ir.fum.cloud.notification.core.domain.model.helper.GenericResponse;
 import ir.fum.cloud.notification.core.domain.model.request.SendMailRequest;
+import ir.fum.cloud.notification.core.domain.model.srv.MailRequestSrv;
 import ir.fum.cloud.notification.core.domain.model.srv.SendMailSrv;
 import ir.fum.cloud.notification.core.domain.model.vo.UserVO;
 import ir.fum.cloud.notification.core.domain.service.MailResendService;
 import ir.fum.cloud.notification.core.domain.service.MailSenderService;
+import ir.fum.cloud.notification.core.domain.service.MailService;
 import ir.fum.cloud.notification.core.exception.NotificationException;
 import ir.fum.cloud.notification.core.util.AuthUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @Validated
@@ -32,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class MailController {
     private final MailSenderService mailSenderService;
     private final MailResendService mailResendService;
+    private final MailService mailService;
 
     @PostMapping
     @Operation(summary = "ارسال ایمیل")
@@ -76,5 +78,24 @@ public class MailController {
         UserVO user = AuthUtils.getCurrentUser();
         return mailResendService.resend(user);
     }
+
+
+    @GetMapping(Endpoint.REQUESTS)
+    @Operation(summary = "ارسال مجدد ایمیل های خطا خورده")
+    @InvalidRequest
+    @Unauthorized
+    @AccessDenied
+    @Conflict
+    @InternalServerError
+    public GenericResponse<List<MailRequestSrv>> getSentMails(@RequestParam(value = "size", required = false, defaultValue = "0") int size,
+                                                              @RequestParam(value = "offset", required = false, defaultValue = "0") int offset) throws NotificationException {
+
+        UserVO user = AuthUtils.getCurrentUser();
+
+        return mailService.getMailRequests(user, size, offset);
+
+    }
+
+
 
 }
